@@ -95,10 +95,10 @@ class LavasploitAPI:
     async def run_auto_priv_esc(self, request):
         await self.update_target_info(request)
 
-        #await self.generate_agent_payload()
-        #await self.attempt_cve_2021_4034()
+        await self.generate_agent_payload()
+        await self.attempt_cve_2021_4034()
 
-        #await self.attempt_crontab()
+        await self.attempt_crontab()
         await self.attempt_Sudo()
 
         return web.json_response('auto PE completed')

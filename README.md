@@ -6,9 +6,9 @@
 ### System: Ubuntu 18.04.6 AMD64 Image
 
 
-further setup:
+further setup
 
-####. Enable root account
+#### Enable root account
 1. set root password
 ```bash
 sudo passwd root
