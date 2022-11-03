@@ -1,4 +1,4 @@
-import uuid
+ import uuid
 import asyncio
 import base64
 from aiohttp import web

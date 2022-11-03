@@ -87,7 +87,7 @@ chmod 772 /tmp/test.sh
 
 Then add the following line to /etc/crontab
 ```bash
-* * * * * 	root	/tmp/tesh.sh
+* * * * * 	root	/tmp/test.sh
 ```
 
 

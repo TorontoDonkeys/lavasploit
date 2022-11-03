@@ -178,7 +178,7 @@
     <h1 x-text="commandToExecute"></h1>
         <button x-show="isExecute">Execute Successfully</button>
     </div>
-    <button x-on:click="executeCommand()">Execute Command</button>
+    <button class="button is-small is-primary" x-on:click="executeCommand()">Execute Command</button>
     <button x-show="isExecute">Execute Successfully</button>
     <button x-on:click="refreshPEStatus()">Check Status</button>
     <h1 x-text="pe_status"></h1>
