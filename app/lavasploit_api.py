@@ -1,4 +1,4 @@
- import uuid
+import uuid
 import asyncio
 import base64
 from aiohttp import web
@@ -125,7 +125,6 @@ class LavasploitAPI:
             'access': access
         }
 
-        self.reconn_status = None
 
     async def send_command_and_retrieve_result(self, command_to_execute, source_payload=None):
 
