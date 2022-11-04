@@ -181,7 +181,7 @@
     <button class="button is-small is-primary" x-on:click="executeCommand()">Execute Command</button>
     <button x-show="isExecute">Execute Successfully</button>
     <button x-on:click="refreshPEStatus()">Check Status</button>
-    <h1 x-text="pe_status"></h1>
+    <h1 x-text="pe_status.result"></h1>
 
 </div>
 
@@ -273,7 +273,7 @@ function alpineLavasploit() {
 
         refreshPEStatus(){
                 apiV2('GET', '/plugin/lavasploit/status').then((data) => {
-                    this.pe_status = data.pe_status;
+                    this.pe_status = data.status;
                     this.compatible_attempts = data.attempt_count;
                 }).catch((error) => {
                     toast('There was and error retrieving PE status', false);

