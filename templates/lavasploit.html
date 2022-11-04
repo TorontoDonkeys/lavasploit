@@ -62,8 +62,8 @@
             </thead>
             <tbody>
                 <tr class="pointer">
-                    <td></td>
-                    <td>Reconn for CVE-2021-4034</td>
+                    <td><input x-model="pe_status.attempt_cve_reconn"></input></td>
+                    <td><span><button x-bind:class="getColor(pe_status.attempt_cve_reconn)"></button></span>Reconn for CVE-2021-4034</td>
                     <td>Exploiting CVE-2021-4034</td>
                     <td></td>
 
@@ -337,6 +337,21 @@ function alpineLavasploit() {
                 }
         },
 
+        getColor(status) {
+                if (status === -1){
+                    return 'pending';
+                }
+                if (status === 0 ){
+                    return 'running';
+                }
+                if (status === 1) {
+                    return 'success'
+                }
+                if (status === 2) {
+                    return 'fail';
+                }
+        },
+
         showOutput(link) {
                 restRequest('POST', { 'index': 'result', 'link_id': link.unique }, (data) => {
                     this.outputCommand = b64DecodeUnicode(link.command);
@@ -349,6 +364,36 @@ function alpineLavasploit() {
 
 // # sourceURL=lavasploit.js
 </script>
-<p>
-    Hello Lavasploit
-</p>
+<style type="text/css">
+    .pending{
+        width:25px;
+        height:25px;
+        color: #fff;
+        background:darkgrey;
+        border:none;
+    }
+
+    .running{
+        width:25px;
+        height:25px;
+        color: #fff;
+        background:yellow;
+        border:none;
+    }
+
+    .success{
+        width:25px;
+        height:25px;
+        color: #fff;
+        background:green;
+        border:none;
+    }
+
+    .fail{
+        width:25px;
+        height:25px;
+        color: #fff;
+        background:red;
+        border:none;
+    }
+</style>
