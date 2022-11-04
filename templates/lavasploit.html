@@ -44,6 +44,7 @@
             </button>
             <span class="mr-4"><strong>Agent Platform</strong>: <span x-text="selectedAgent.platform"></span></span>
             <span><strong>Compatible Privilege Escalation Attempts</strong>: <span x-text="compatible_attempts"></span></span>
+            <span><button class="button is-small is-primary" x-on:click="executeCommand()">Execute Command</button></span>
         </div>
        <p class="has-text-centered content" x-show="!links.length">No links to show</p>
     </div>
@@ -174,12 +175,6 @@
     </div>
 
 
-    <div>
-    <h1 x-text="commandToExecute"></h1>
-        <button x-show="isExecute">Execute Successfully</button>
-    </div>
-    <button class="button is-small is-primary" x-on:click="executeCommand()">Execute Command</button>
-    <button x-show="isExecute">Execute Successfully</button>
     <button x-on:click="refreshPEStatus()">Check Status</button>
     <h1 x-text="pe_status.result"></h1>
 
@@ -247,6 +242,7 @@ function alpineLavasploit() {
                     while (this.$refs.headerAccess) {
                         await sleep(3000);
                         this.refreshAgents();
+                        this.refreshPEStatus();
                     }
                 }).catch((error) => {
                     toast('There was an error initializing the page', false);
