@@ -129,7 +129,7 @@ class LavasploitAPI:
                 if not await self.attempt_cve_2021_4034():
                     self.status['result'] = 1
                     return web.json_response('auto PE Failed.')
-        elf.status['result'] = 1
+        self.status['result'] = 1
         return web.json_response('auto PE completed')
 
     async def update_target_info(self, request):
