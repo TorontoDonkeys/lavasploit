@@ -34,6 +34,19 @@ class LavasploitAPI:
             "result":-1
         }
 
+    async def reset_status(self):
+        self.status = {
+            "paw": self.paw,
+            "initialization": -1,
+            "attempt_crontab_reconn": -1,
+            "attempt_crontab_exploit": -1,
+            "attempt_sudo_reconn": -1,
+            "attempt_sudo_exploit": -1,
+            "attempt_cve_reconn": -1,
+            "attempt_cve_exploit": -1,
+            "result": -1
+        }
+
     async def retrieve_status(self, request):
         return web.json_response(dict(
             status = self.status,
@@ -76,6 +89,7 @@ class LavasploitAPI:
             result = await self.send_command_and_retrieve_result(command)
             self.status['attempt_cve_exploit'] = 1
             return True
+        self.status['attempt_cve_exploit'] = 2
         return False
 
 
@@ -86,7 +100,7 @@ class LavasploitAPI:
         self.current_command_description = 'Reconn for available sudo privileges for current user without password'
         command = '''timeout 1 sudo -l | grep NOPASSWD | awk -F " " '{print $5}' '''
         current_user_privilege = await self.send_command_and_retrieve_result(command)
-        self.status['attempt_cve_reconn'] = 1
+        self.status['attempt_sudo_reconn'] = 1
         #current_user_privilege = str(base64.b64decode(result), 'utf-8').strip("\n\r")
         if current_user_privilege == 'ALL':
             self.status['attempt_sudo_exploit'] = 0
@@ -96,6 +110,7 @@ class LavasploitAPI:
             result = await self.send_command_and_retrieve_result(command)
             self.status['attempt_sudo_exploit'] = 1
             return True
+        self.status['attempt_sudo_exploit'] = 2
         return False
 
     async def attempt_crontab(self):
@@ -117,17 +132,19 @@ class LavasploitAPI:
             result = await self.send_command_and_retrieve_result(command)
             self.status['attempt_crontab_exploit'] = 1
             return True
+        self.status['attempt_crontab_exploit'] = 2
         return False
 
 
     async def run_auto_priv_esc(self, request):
         await self.update_target_info(request)
+        await self.reset_status()
 
         await self.generate_agent_payload()
         if not await self.attempt_Sudo():
             if not await self.attempt_crontab():
                 if not await self.attempt_cve_2021_4034():
-                    self.status['result'] = 1
+                    self.status['result'] = 2
                     return web.json_response('auto PE Failed.')
         self.status['result'] = 1
         return web.json_response('auto PE completed')
